@@ -6,6 +6,34 @@
 </head>
 <body>
   <h2>Autentificare</h2>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
+  
+    if (status) {
+      const mesaj = document.createElement("div");
+      mesaj.textContent = decodeURIComponent(status);
+      mesaj.style.background = "#e0ffe0";
+      mesaj.style.border = "1px solid green";
+      mesaj.style.padding = "10px";
+      mesaj.style.color = "green";
+      mesaj.style.margin = "15px";
+      mesaj.style.position = "relative";
+      mesaj.style.fontWeight = "bold";
+  
+      const closeBtn = document.createElement("span");
+      closeBtn.textContent = "✖";
+      closeBtn.style.position = "absolute";
+      closeBtn.style.right = "10px";
+      closeBtn.style.cursor = "pointer";
+      closeBtn.onclick = () => mesaj.remove();
+  
+      mesaj.appendChild(closeBtn);
+      document.body.prepend(mesaj);
+    }
+  </script>
+
   <form action="login.php" method="POST">
     <label for="username">Telefon:</label>
     <input type="text" name="telefon" required><br>

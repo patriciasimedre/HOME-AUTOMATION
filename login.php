@@ -25,6 +25,7 @@ if ($result->num_rows === 1) {
     #---------------
 
     if (password_verify($parola, $user['parola_hash'])) {
+        var_dump(password_verify($parola, $user['parola_hash']));
         $_SESSION['telefon'] = $user['telefon'];
         $_SESSION['rol'] = $user['rol'];
 
