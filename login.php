@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'db.php';
+require 'db.php';
 
 # temporar
 echo "<pre>";
@@ -8,17 +8,15 @@ print_r($_POST);
 echo "</pre>";
 #-------------
 
-$telefon = $_POST['telefon'];
-$parola = $_POST['parola'];
+$telefon = $_POST['telefon'] ?? '';
+$parola = $_POST['parola'] ?? '';
 
-$sql = "SELECT * FROM utilizatori WHERE telefon=?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $telefon);
-$stmt->execute();
-$result = $stmt->get_result();
+$sql = "SELECT * FROM utilizatori WHERE telefon = ?";
+$stmt = $pdo->prepare($sql);
+$stmt->execute([$telefon]);
+$user = $stmt->fetch();
 
-if ($result->num_rows === 1) {
-    $user = $result->fetch_assoc();
+if ($user) {
     # temporar
     echo "Hash salvat: " . $user['parola_hash'] . "<br>";
     echo "Parolă introdusă: " . $parola . "<br>";
@@ -31,8 +29,9 @@ if ($result->num_rows === 1) {
 
         if ($user['rol'] === 'admin') {
             header("Location: admin.php");
+            exit;
         } else {
-            echo "Bine ai venit, " . $user['prenume'] . "!";
+            echo "Bine ai venit, " . htmlspecialchars($user['prenume']) . "!";
         }
     } else {
         echo "Parolă greșită.";

@@ -4,10 +4,15 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin') {
     die("Acces interzis.");
 }
 
-include 'db.php';
+require 'db.php';
 
-$sql = "SELECT id, nume, prenume, cnp, telefon, codBluetooth, rol FROM utilizatori ORDER BY id";
-$result = $conn->query($sql);
+try {
+    $sql = "SELECT id, nume, prenume, cnp, telefon, codBluetooth, rol FROM utilizatori ORDER BY id";
+    $stmt = $pdo->query($sql);
+    $utilizatori = $stmt->fetchAll();
+} catch (PDOException $e) {
+    die("Eroare la interogare: " . $e->getMessage());
+}
 ?>
 
 <!DOCTYPE html>
@@ -29,7 +34,7 @@ $result = $conn->query($sql);
       <th>Rol</th>
     </tr>
 
-    <?php while($row = $result->fetch_assoc()) { ?>
+    <?php foreach ($utilizatori as $row) { ?>
       <tr>
         <td><?= htmlspecialchars($row['id']) ?></td>
         <td><?= htmlspecialchars($row['nume']) ?></td>

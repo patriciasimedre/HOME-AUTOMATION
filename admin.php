@@ -4,13 +4,13 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin') {
     die("Acces interzis.");
 }
 
-include 'db.php';
+require 'db.php';
 
 $mesaj = "";
 $mesaj_tip = "";
 if (isset($_GET['status'])) {
     $mesaj = htmlspecialchars($_GET['status']);
-    $mesaj_tip = strpos($mesaj, 'șters') !== false || strpos($mesaj, 'Eroare') !== false ? 'danger' : 'success';
+    $mesaj_tip = (strpos($mesaj, 'șters') !== false || strpos($mesaj, 'Eroare') !== false) ? 'danger' : 'success';
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adauga'])) {
@@ -40,27 +40,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adauga'])) {
         $erori[] = "Parola trebuie să aibă cel puțin 6 caractere.";
     }
 
-    $sql_cnp = $conn->prepare("SELECT id FROM utilizatori WHERE cnp = ?");
-    $sql_cnp->bind_param("s", $cnp);
-    $sql_cnp->execute();
-    $sql_cnp->store_result();
-    if ($sql_cnp->num_rows > 0) {
+    // Verificări unice
+    $sql_cnp = $pdo->prepare("SELECT id FROM utilizatori WHERE cnp = ?");
+    $sql_cnp->execute([$cnp]);
+    if ($sql_cnp->fetch()) {
         $erori[] = "CNP-ul este deja înregistrat.";
     }
 
-    $sql_tel = $conn->prepare("SELECT id FROM utilizatori WHERE telefon = ?");
-    $sql_tel->bind_param("s", $telefon);
-    $sql_tel->execute();
-    $sql_tel->store_result();
-    if ($sql_tel->num_rows > 0) {
+    $sql_tel = $pdo->prepare("SELECT id FROM utilizatori WHERE telefon = ?");
+    $sql_tel->execute([$telefon]);
+    if ($sql_tel->fetch()) {
         $erori[] = "Numărul de telefon este deja folosit.";
     }
 
     if ($rol === 'admin') {
-        $stmt_admin = $conn->prepare("SELECT COUNT(*) FROM utilizatori WHERE rol = 'admin'");
-        $stmt_admin->execute();
-        $stmt_admin->bind_result($nr_admini);
-        $stmt_admin->fetch();
+        $stmt_admin = $pdo->query("SELECT COUNT(*) FROM utilizatori WHERE rol = 'admin'");
+        $nr_admini = $stmt_admin->fetchColumn();
         if ($nr_admini >= 1) {
             $erori[] = "Există deja un administrator în sistem. Doar unul este permis.";
         }
@@ -71,14 +66,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adauga'])) {
 
         $sql = "INSERT INTO utilizatori (nume, prenume, cnp, telefon, parola_hash, codBluetooth, rol)
                 VALUES (?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssssss", $nume, $prenume, $cnp, $telefon, $parola_hash, $codBluetooth, $rol);
+        $stmt = $pdo->prepare($sql);
+        $ok = $stmt->execute([$nume, $prenume, $cnp, $telefon, $parola_hash, $codBluetooth, $rol]);
 
-        if ($stmt->execute()) {
+        if ($ok) {
             $mesaj = "Utilizator adăugat cu succes!";
             $mesaj_tip = "success";
         } else {
-            $mesaj = "Eroare: " . $stmt->error;
+            $mesaj = "Eroare la inserare.";
             $mesaj_tip = "error";
         }
     } else {
@@ -153,25 +148,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['adauga'])) {
       <th>Șterge</th>
     </tr>
     <?php
-    $rez = $conn->query("SELECT * FROM utilizatori");
-    while($row = $rez->fetch_assoc()) {
-      echo "<tr>
-        <td>{$row['id']}<input type='hidden' name='id[]' value='{$row['id']}'></td>
-        <td><input type='text' name='nume[]' value='{$row['nume']}'></td>
-        <td><input type='text' name='prenume[]' value='{$row['prenume']}'></td>
-        <td><input type='text' name='cnp[]' value='{$row['cnp']}'></td>
-        <td><input type='text' name='telefon[]' value='{$row['telefon']}'></td>
-        <td><input type='text' name='codBluetooth[]' value='{$row['codBluetooth']}'></td>
-        <td>
-          <select name='rol[]'>
-            <option value='user'" . ($row['rol'] === 'user' ? ' selected' : '') . ">user</option>
-            <option value='admin'" . ($row['rol'] === 'admin' ? ' selected' : '') . ">admin</option>
-          </select>
-        </td>
-        <td><input type='password' name='parola[]' placeholder='Nouă parolă'></td>
-        <td><button type='submit' name='salveaza' value='{$row['id']}'>Salvează</button></td>
-        <td><button type='submit' name='sterge' value='{$row['id']}' onclick=\"return confirm('Sigur vrei să ștergi acest utilizator?')\">🗑️</button></td>
-      </tr>";
+    $stmt = $pdo->query("SELECT * FROM utilizatori");
+    while ($row = $stmt->fetch()) {
+        echo "<tr>
+          <td>{$row['id']}<input type='hidden' name='id[]' value='{$row['id']}'></td>
+          <td><input type='text' name='nume[]' value='{$row['nume']}'></td>
+          <td><input type='text' name='prenume[]' value='{$row['prenume']}'></td>
+          <td><input type='text' name='cnp[]' value='{$row['cnp']}'></td>
+          <td><input type='text' name='telefon[]' value='{$row['telefon']}'></td>
+          <td><input type='text' name='codBluetooth[]' value='{$row['codBluetooth']}'></td>
+          <td>
+            <select name='rol[]'>
+              <option value='user'" . ($row['rol'] === 'user' ? ' selected' : '') . ">user</option>
+              <option value='admin'" . ($row['rol'] === 'admin' ? ' selected' : '') . ">admin</option>
+            </select>
+          </td>
+          <td><input type='password' name='parola[]' placeholder='Nouă parolă'></td>
+          <td><button type='submit' name='salveaza' value='{$row['id']}'>Salvează</button></td>
+          <td><button type='submit' name='sterge' value='{$row['id']}' onclick=\"return confirm('Sigur vrei să ștergi acest utilizator?')\">🗑️</button></td>
+        </tr>";
     }
     ?>
   </table>

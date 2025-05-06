@@ -1,12 +1,19 @@
 <?php
-$host = 'localhost';
-$db = 'autentificare';
-$user = 'root';
-$pass = ''; // sau parola ta de MySQL
+$host = 'proiectip-db.mysql.database.azure.com';
+$db   = 'proiectIP';
+$user = 'azureadmin';
+$pass = 'Haiaratacapoti69';  // <- înlocuiește cu parola reală
+$charset = 'utf8mb4';
 
-$conn = new mysqli($host, $user, $pass, $db);
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+];
 
-if ($conn->connect_error) {
-    die("Conexiunea a eșuat: " . $conn->connect_error);
+try {
+    $pdo = new PDO($dsn, $user, $pass, $options);
+} catch (\PDOException $e) {
+    die("Conexiune eșuată: " . $e->getMessage());
 }
 ?>

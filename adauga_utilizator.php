@@ -4,7 +4,7 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin') {
     die("Acces interzis.");
 }
 
-include 'db.php';
+require 'db.php';
 
 $nume = $_POST['nume'];
 $prenume = $_POST['prenume'];
@@ -17,14 +17,23 @@ $rol = $_POST['rol'];
 // Criptăm parola înainte de salvare
 $parola_hash = password_hash($parola, PASSWORD_DEFAULT);
 
-$sql = "INSERT INTO utilizatori (nume, prenume, cnp, telefon, parola_hash, codBluetooth, rol)
-        VALUES (?, ?, ?, ?, ?, ?, ?)";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("sssssss", $nume, $prenume, $cnp, $telefon, $parola_hash, $codBluetooth, $rol);
+try {
+    $sql = "INSERT INTO utilizatori (nume, prenume, cnp, telefon, parola_hash, codBluetooth, rol)
+            VALUES (:nume, :prenume, :cnp, :telefon, :parola_hash, :codBluetooth, :rol)";
+    $stmt = $pdo->prepare($sql);
 
-if ($stmt->execute()) {
+    $stmt->execute([
+        ':nume' => $nume,
+        ':prenume' => $prenume,
+        ':cnp' => $cnp,
+        ':telefon' => $telefon,
+        ':parola_hash' => $parola_hash,
+        ':codBluetooth' => $codBluetooth,
+        ':rol' => $rol
+    ]);
+
     echo "Utilizatorul a fost adăugat cu succes.";
-} else {
-    echo "Eroare: " . $stmt->error;
+} catch (PDOException $e) {
+    echo "Eroare: " . $e->getMessage();
 }
 ?>
