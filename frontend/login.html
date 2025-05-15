@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autentificare</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(to bottom, #610C9F, #940B92, #DA0C81, #E95793);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center text-white px-4">
+  <div class="bg-white bg-opacity-10 p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center backdrop-blur-sm">
+    <h1 class="hidden md:block text-3xl font-extrabold mb-3 tracking-tight">Bine ai venit!</h1>
+    <h2 class="text-xl sm:text-2xl font-bold mb-4">Autentificare</h2>
+
+    <form id="loginForm" class="flex flex-col gap-4">
+      <input type="text" name="telefon" placeholder="Telefon" required class="px-4 py-2 rounded-xl text-black focus:outline-none text-sm sm:text-base">
+      <input type="password" name="parola" placeholder="Parolă" required class="px-4 py-2 rounded-xl text-black focus:outline-none text-sm sm:text-base">
+      <button type="submit" class="bg-[#DA0C81] hover:bg-[#940B92] transition-colors py-2 px-6 rounded-xl cursor-pointer font-bold">Autentificare</button>
+    </form>
+
+    <div id="mesajContainer" class="mt-4"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById("loginForm");
+    const mesajContainer = document.getElementById("mesajContainer");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      mesajContainer.innerHTML = "";
+
+      const formData = new FormData(form);
+      const payload = new URLSearchParams(formData);
+
+      const response = await fetch("../backend/login.php", {
+        method: "POST",
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: payload
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        window.location.href = result.redirect;
+      } else {
+        const alert = document.createElement("div");
+        alert.className = "bg-red-200 text-red-800 rounded-xl px-4 py-2 text-sm flex items-center justify-between";
+        alert.innerHTML = result.message;
+
+        const closeBtn = document.createElement("span");
+        closeBtn.textContent = "✖";
+        closeBtn.className = "ml-4 cursor-pointer font-bold";
+        closeBtn.onclick = () => alert.remove();
+
+        alert.appendChild(closeBtn);
+        mesajContainer.appendChild(alert);
+      }
+    });
+  </script>
+</body>
+</html>
