@@ -1,15 +1,14 @@
 <?php
 session_start();
 header('Content-Type: application/json');
+require 'db.php';
+
+$data = json_decode(file_get_contents("php://input"), true);
 
 if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin') {
     echo json_encode(["success" => false, "message" => "Acces interzis."]);
     exit;
 }
-
-require 'db.php';
-
-$data = json_decode(file_get_contents("php://input"), true);
 
 if (!isset($data['id'])) {
     echo json_encode(["success" => false, "message" => "ID lipsă."]);
@@ -18,21 +17,29 @@ if (!isset($data['id'])) {
 
 $id = $data['id'];
 
-// 🔸 ȘTERGERE utilizator
+// 🔁 GESTIONARE ȘTERGERE UTILIZATOR
 if (isset($data['sterge']) && $data['sterge'] === true) {
-    try {
-        $stmt = $pdo->prepare("DELETE FROM utilizatori WHERE id = ?");
-        $stmt->execute([$id]);
+    $stmt_admin = $pdo->prepare("SELECT COUNT(*) FROM utilizatori WHERE rol = 'admin'");
+    $stmt_admin->execute();
+    $admini = $stmt_admin->fetchColumn();
 
-        echo json_encode(["success" => true, "message" => "Utilizator șters cu succes."]);
-        exit;
-    } catch (PDOException $e) {
-        echo json_encode(["success" => false, "message" => "Eroare la ștergere: " . $e->getMessage()]);
+    $stmt_utilizator = $pdo->prepare("SELECT rol FROM utilizatori WHERE id = ?");
+    $stmt_utilizator->execute([$id]);
+    $utilizator = $stmt_utilizator->fetch();
+
+    if ($utilizator && $utilizator['rol'] === 'admin' && $admini == 1) {
+        echo json_encode(["success" => false, "message" => "Nu poți șterge ultimul administrator din sistem."]);
         exit;
     }
+
+    $stmt = $pdo->prepare("DELETE FROM utilizatori WHERE id = ?");
+    $stmt->execute([$id]);
+
+    echo json_encode(["success" => true, "message" => "Utilizator șters cu succes."]);
+    exit;
 }
 
-// 🔹 ACTUALIZARE date utilizator
+// 🔁 ACTUALIZARE DATE UTILIZATOR
 $nume = $data['nume'] ?? '';
 $prenume = $data['prenume'] ?? '';
 $cnp = $data['cnp'] ?? '';
@@ -76,10 +83,12 @@ if ($telefon !== $vechi['telefon']) {
         $erori[] = "Numărul de telefon este deja folosit.";
     }
 }
-if ($rol === 'admin' && $vechi['rol'] !== 'admin') {
+
+// ✅ Verificare dacă este ultimul admin care își schimbă rolul în user
+if ($vechi['rol'] === 'admin' && $rol === 'user') {
     $stmt_admin = $pdo->query("SELECT COUNT(*) FROM utilizatori WHERE rol = 'admin'");
-    if ($stmt_admin->fetchColumn() >= 1) {
-        $erori[] = "Există deja un administrator în sistem.";
+    if ($stmt_admin->fetchColumn() <= 1) {
+        $_SESSION['necesita_admin'] = true;
     }
 }
 
@@ -88,7 +97,6 @@ if (!empty($erori)) {
     exit;
 }
 
-// 🔄 Actualizare date
 $schimbari = [];
 if ($nume !== $vechi['nume']) $schimbari[] = "numele";
 if ($prenume !== $vechi['prenume']) $schimbari[] = "prenumele";
@@ -114,6 +122,12 @@ try {
     $mesaj = !empty($schimbari)
       ? "Au fost modificate: " . implode(", ", $schimbari) . "."
       : "Nu s-au detectat modificări.";
+
+    // Afișează mesaj suplimentar dacă este nevoie de admin
+    if (isset($_SESSION['necesita_admin']) && $_SESSION['necesita_admin']) {
+        unset($_SESSION['necesita_admin']);
+        $mesaj .= " <strong class='block mt-1 text-yellow-700'>ATENȚIE: În sistem nu mai există niciun administrator. Următorul utilizator adăugat va deveni automat admin.</strong>";
+    }
 
     echo json_encode(["success" => true, "message" => $mesaj]);
 } catch (PDOException $e) {

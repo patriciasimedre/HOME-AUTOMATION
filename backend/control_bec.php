@@ -18,8 +18,10 @@ if (!in_array($actiune, ['on', 'off'])) {
     exit;
 }
 
-$stmt = $pdo->prepare("INSERT INTO comenzi_bec (camera, actiune) VALUES (?, ?)");
-$stmt->execute([$camera, $actiune]);
+$telefon = $_SESSION['telefon'];
+
+$stmt = $pdo->prepare("INSERT INTO comenzi_bec (camera, actiune, telefon) VALUES (?, ?, ?)");
+$stmt->execute([$camera, $actiune, $telefon]);
 
 echo json_encode([
   "succes" => true,

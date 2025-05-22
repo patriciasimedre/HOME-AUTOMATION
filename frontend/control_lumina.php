@@ -49,12 +49,19 @@ if (!isset($_SESSION['rol'])) {
       <button onclick="controlBec('off')" class="bg-[#940B92] hover:bg-[#610C9F] px-6 py-3 rounded-xl font-semibold shadow-xl transition-all scale-100 hover:scale-105">Stinge</button>
     </div>
 
+    <div id="istoricBec" class="mt-6 text-left w-full max-w-xl mx-auto text-sm bg-white/10 p-4 rounded-xl shadow">
+      <h3 class="text-lg font-bold mb-2">Istoric / Status bec</h3>
+      <div id="becInfo">Se încarcă...</div>
+    </div>
+
+    <!-- ULTIMUL STATUS ACTIVITATE -->
+    <div id="ultimStatus" class="mt-6 text-left w-full max-w-xl mx-auto text-sm bg-white/10 p-4 rounded-xl shadow hidden">
+      <h3 class="text-lg font-bold mb-2">Ultimul status activitate</h3>
+      <div id="ultimStatusContent"></div>
+    </div>
+
     <p id="status" class="text-lg italic mt-2"></p>
   </main>
-
-  <!-- SUNETE -->
-  <audio id="audioOn" src="assets/sounds/on.mp3"></audio>
-  <audio id="audioOff" src="assets/sounds/off.mp3"></audio>
 
   <!-- SCRIPT CONTROL -->
   <script>
@@ -72,17 +79,68 @@ if (!isset($_SESSION['rol'])) {
         bec.className = 'text-[120px] mb-6 transition duration-500 ' +
           (actiune === 'on' ? 'text-yellow-300 bulb-on' : 'opacity-50');
 
-        // Redă sunetul
-        const sunet = actiune === 'on'
-          ? document.getElementById('audioOn')
-          : document.getElementById('audioOff');
-        sunet.currentTime = 0;
-        sunet.play();
+        afiseazaIstoricBec();
       })
       .catch(() => {
         document.getElementById('status').textContent = 'Eroare la trimiterea comenzii';
       });
     }
+
+    function afiseazaIstoricBec() {
+      fetch('../backend/get_bec_status.php')
+        .then(r => r.json())
+        .then(data => {
+          const container = document.getElementById("becInfo");
+          container.innerHTML = "";
+
+          if (!data.success) {
+            container.textContent = "Eroare la încărcarea datelor.";
+            return;
+          }
+
+          if (data.tip === 'admin') {
+            container.innerHTML = `
+              Ultimul status: <strong>${data.status.toUpperCase()}</strong><br>
+              Dată & oră: ${new Date(data.timestamp).toLocaleString()}<br>
+              Utilizator: ${data.utilizator}
+            `;
+          } else if (data.tip === 'user') {
+            if (data.actiuni.length === 0) {
+              container.textContent = "Nu ai acționat încă becul.";
+              return;
+            }
+
+            data.actiuni.forEach(entry => {
+              const p = document.createElement("p");
+              p.innerHTML = `<strong>${entry.actiune.toUpperCase()}</strong> - ${new Date(entry.timestamp).toLocaleString()}`;
+              container.appendChild(p);
+            });
+          }
+        });
+    }
+
+    function afiseazaUltimStatusActivitate() {
+      fetch('../backend/get_ultim_status.php')
+        .then(r => r.json())
+        .then(data => {
+          const box = document.getElementById("ultimStatus");
+          const content = document.getElementById("ultimStatusContent");
+
+          if (!data.success || !data.statusuri || data.statusuri.length === 0) return;
+
+          box.classList.remove("hidden");
+          content.innerHTML = "";
+
+          data.statusuri.forEach(entry => {
+            const p = document.createElement("p");
+            p.innerHTML = `<strong>Userul ${entry.telefon}</strong> a <strong>${entry.actiune}</strong> la ora ${new Date(entry.ora).toLocaleString()}`;
+            content.appendChild(p);
+          });
+        });
+    }
+
+    afiseazaIstoricBec();
+    afiseazaUltimStatusActivitate();
   </script>
 
 </body>
