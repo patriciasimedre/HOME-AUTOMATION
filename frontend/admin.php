@@ -26,6 +26,7 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'admin') {
   <a href="control_lumina.php" class="text-white hover:underline">💡 Control Lumina</a>
   <a href="activitate/activitate.php">📋 Activitate</a>
   <a href="../backend/logout.php" class="text-white hover:underline">🔒 Logout</a>
+   <a href="program_temperatura/program_temperatura.php" class="text-white hover:underline px-4 py-2">🌡️ Program temperatură</a>
 </nav>
 
 <div class="text-center">

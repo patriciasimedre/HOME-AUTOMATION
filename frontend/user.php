@@ -21,27 +21,30 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'user') {
 </head>
 <body class="min-h-screen flex flex-col items-center justify-start px-4 py-6 text-white">
 
-<nav class="bg-white/10 backdrop-blur-md p-4 rounded-xl mb-6 flex flex-wrap items-center justify-center gap-4">
-  <strong class="text-lg">Panou Utilizator</strong>
-  <a href="control_lumina.php" class="text-white hover:underline">💡 Control lumină</a>
-  <a href="activitate/activitate.php">📋 Activitate</a>
-  <a href="../backend/logout.php" class="text-white hover:underline">🔒 Logout</a>
-</nav>
+  <!-- Navbar -->
+  <nav class="bg-white/10 backdrop-blur-md p-4 rounded-xl mb-6 flex flex-wrap items-center justify-center gap-4 shadow-lg w-full max-w-4xl">
+    <strong class="text-lg">Panou Utilizator</strong>
+    <a href="control_lumina.php" class="text-white hover:underline">💡 Control lumină</a>
+    <a href="activitate/activitate.php" class="text-white hover:underline">📋 Activitate</a>
+    <a href="program_temperatura/program_temperatura.php" class="text-white hover:underline">🌡️ Program temperatură</a>
+    <a href="../backend/logout.php" class="text-white hover:underline">🔒 Logout</a>
+  </nav>
 
-<h2 class="text-2xl font-bold mb-4">Bine ai venit, <span id="prenume"></span>!</h2>
+  <!-- Bine ai venit -->
+  <h2 class="text-2xl font-bold mb-4 text-center">Bine ai venit, <span id="prenume"></span>!</h2>
 
-<script>
-  fetch('../backend/check_session.php')
-    .then(r => r.json())
-    .then(data => {
-      if (!data.success || data.rol !== 'user') {
-        window.location.href = 'login.html';
-      } else {
-        document.getElementById('prenume').textContent = data.prenume;
-      }
-    })
-    .catch(() => window.location.href = 'login.html');
-</script>
+  <script>
+    fetch('../backend/check_session.php')
+      .then(r => r.json())
+      .then(data => {
+        if (!data.success || data.rol !== 'user') {
+          window.location.href = 'login.html';
+        } else {
+          document.getElementById('prenume').textContent = data.prenume;
+        }
+      })
+      .catch(() => window.location.href = 'login.html');
+  </script>
 
 </body>
 </html>
